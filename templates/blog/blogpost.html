@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block blogactive %} active {% endblock blogactive %}
+{% block title %}Blog Post{% endblock title %}
+{% block body %}
+{% load humanize %}
+{% load extras %}
+
+<div class="container my-3">
+  <h2 class="blog-post-title">{{post.title}}</h2>
+  <p class="blog-post-meta">{{post.timeStamp}} by <a href="/about">{{post.author}}</a> (<span>{{post.views}} views</span>)</p>
+  <p>{{post.content|safe}}</p>
+  <hr>
+</div>
+<div class="container">
+  <h2>Comments({{comments.count}})</h2>
+  <div class="my-2">
+    {% if user.is_authenticated %}
+    <form action="/blog/postComment" method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="exampleInputEmail1" class="form-label">Post Comment</label>
+        <input type="text" class="form-control" name="comment" id="exampleInputEmail1" placeholder="Enter Your Comment"
+          aria-describedby="emailHelp" required>
+      </div>
+      <input type="hidden" name="postSno" class="form-control" value="{{post.sno}}">
+      <input type="hidden" name="parentSno" class="form-control" value="">
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    {% else %}
+    <p>Please Login to Post comment</p>
+    {% endif %}
+  </div>
+  {% for comment in comments%}
+  <div class="row my-3">
+    <div class="col-md-1 ">
+      <img class="rounded-circle mx-auto d-block w-100 p-2 border border-dark" src="/static/img/user.jpg" alt="user">
+    </div>
+    <div class="col-md-11"><b>{{comment.user.username}}</b> {{comment.timeStamp | naturaltime}}
+      <div>
+        {{comment.comment}}
+      </div>
+      <div class="reply" mx-0 my-1>
+
+        {% if user.is_authenticated %}
+        <a class="btn btn-primary" data-bs-toggle="collapse" href="#replaydiv{{comment.sno}}" role="button"
+          aria-expanded="false" aria-controls="replaydiv{{comment.sno}}">
+          Replay
+        </a>
+
+        <div class="collapse" id="replaydiv{{comment.sno}}">
+          <div class="card card-body my-2">
+            <form action="/blog/postComment" method="post">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="comment" class="form-label">Replay Comment</label>
+                <input type="text" class="form-control" name="comment" id="exampleInputEmail"
+                  placeholder="Enter Your Replay Here" aria-describedby="emailHelp" required>
+                <input type="hidden" name="parentSno" class="form-control" value="{{comment.sno}}">
+              </div>
+              <input type="hidden" name="postSno" class="form-control" value="{{post.sno}}">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <button class="btn btn-primary" data-bs-toggle="collapse" href="#replaydiv{{comment.sno}}" role="button"
+          aria-expanded="false" aria-controls="replaydiv{{comment.sno}}" disable>
+          Login to Replay
+        </button>
+        {% endif %}
+
+        <div class="replies my-2">
+          {% for reply in replyDict|get_val:comment.sno %}
+          <div class="row-my-2">
+            <div class="col-md-1">
+              <img class="rounded-circle mx-auto d-block w-100 p-2 border border-dark" src="/static/img/user.jpg"
+                alt="user">
+            </div>
+            <div class="col-md-11">
+            <b>{{reply.user.username}}</b> {{reply.timeStamp | naturaltime}}
+                <div> {{reply.comment}}</div>
+            </div>
+              <br>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock body %}
